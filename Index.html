@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Marketing Products Family Feud</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa; /* Google light gray */
+            color: #202124; /* Google dark gray */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .google-blue-500 {
+            background-color: #4285F4;
+        }
+        .google-red-500 {
+            background-color: #EA4335;
+        }
+        .google-yellow-500 {
+            background-color: #FBBC05;
+        }
+        .google-green-500 {
+            background-color: #34A853;
+        }
+        .button-google-style {
+            @apply px-6 py-3 rounded-full font-semibold text-white shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-75;
+        }
+        .button-google-blue {
+            @apply google-blue-500 hover:bg-blue-600 focus:ring-blue-500;
+        }
+        .button-google-red {
+            @apply google-red-500 hover:bg-red-600 focus:ring-red-500;
+        }
+        .button-google-green {
+            @apply google-green-500 hover:bg-green-600 focus:ring-green-500;
+        }
+        .answer-card {
+            background-color: #fff;
+            border: 1px solid #dadce0; /* Google border color */
+            @apply rounded-xl shadow-sm overflow-hidden transition-all duration-300 ease-in-out;
+        }
+        .answer-card-revealed {
+            background-color: #e8f0fe; /* Google blue light */
+        }
+        .answer-text-hidden {
+            filter: blur(4px);
+            opacity: 0;
+            transition: filter 0.3s ease, opacity 0.3s ease;
+        }
+        .answer-text-revealed {
+            filter: blur(0);
+            opacity: 1;
+        }
+        .active-team {
+            @apply ring-4 ring-blue-500 ring-opacity-75 shadow-lg;
+        }
+        /* Modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            max-width: 500px;
+            text-align: center;
+            position: relative;
+        }
+        .close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #5f6368;
+        }
+        .close-button:hover {
+            color: #202124;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div id="gameContainer" class="bg-white p-6 md:p-10 rounded-3xl shadow-2xl max-w-4xl w-full flex flex-col items-center space-y-8">
+
+        <!-- Header -->
+        <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-red-500 to-yellow-400">
+            Google Marketing Products Family Feud
+        </h1>
+
+        <!-- Initial Screen / Game Start -->
+        <div id="introScreen" class="text-center space-y-6">
+            <p class="text-lg text-gray-700">Welcome to the Google Marketing Products Family Feud! Get ready for 10 rounds of fun and knowledge.</p>
+            <p class="text-md text-gray-600">This game is designed for 5 teams (A, B, C, D, E) with 12 players each. The host will manage the game using this interface.</p>
+            <button id="startGameButton" class="button-google-style button-google-blue">Start Game</button>
+        </div>
+
+        <!-- Game Play Screen -->
+        <div id="gameScreen" class="hidden w-full space-y-6">
+            <!-- Game Info Bar -->
+            <div class="flex flex-wrap justify-between items-center bg-gray-100 p-4 rounded-xl shadow-inner text-sm md:text-base">
+                <div class="flex flex-col items-center px-2 py-1 bg-white rounded-lg shadow-sm">
+                    <span class="font-semibold text-gray-600">Round</span>
+                    <span id="currentRoundDisplay" class="text-xl font-bold text-blue-600">1 / 10</span>
+                </div>
+                <div class="flex flex-col items-center px-2 py-1 bg-white rounded-lg shadow-sm">
+                    <span class="font-semibold text-gray-600">Time Left</span>
+                    <span id="timerDisplay" class="text-xl font-bold text-red-600">60</span>
+                </div>
+                <div class="flex flex-col items-center px-2 py-1 bg-white rounded-lg shadow-sm">
+                    <span class="font-semibold text-gray-600">Current Team</span>
+                    <span id="currentTeamDisplay" class="text-xl font-bold text-green-600">Team A</span>
+                </div>
+            </div>
+
+            <!-- Question Display -->
+            <div class="bg-blue-50 p-6 rounded-2xl shadow-lg border-2 border-blue-200">
+                <h2 id="questionDisplay" class="text-2xl md:text-3xl font-bold text-blue-800 text-center"></h2>
+            </div>
+
+            <!-- Answers Grid -->
+            <div id="answersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+                <!-- Answer cards will be dynamically inserted here -->
+            </div>
+
+            <!-- Team Scores -->
+            <div class="w-full bg-white p-4 rounded-2xl shadow-lg border border-gray-200">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Team Scores</h3>
+                <div id="teamScoresDisplay" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                    <!-- Team score cards will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <!-- Host Controls -->
+            <div class="flex flex-wrap justify-center gap-4 mt-6">
+                <button id="passTurnButton" class="button-google-style button-google-red w-full sm:w-auto">Pass Turn</button>
+                <button id="nextQuestionButton" class="button-google-style button-google-green hidden w-full sm:w-auto">Next Question</button>
+                <button id="endGameEarlyButton" class="button-google-style button-google-red w-full sm:w-auto">End Game Early</button>
+            </div>
+        </div>
+
+        <!-- End Game Screen -->
+        <div id="endGameScreen" class="hidden w-full text-center space-y-6">
+            <h2 class="text-4xl font-extrabold text-blue-800">Game Over!</h2>
+            <p class="text-xl text-gray-700">Final Scores:</p>
+            <div id="finalScoresDisplay" class="w-full bg-white p-6 rounded-2xl shadow-lg border border-gray-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                <!-- Final team scores -->
+            </div>
+            <p id="topTeamsDisplay" class="text-2xl font-bold text-green-700"></p>
+            <button id="resetGameButton" class="button-google-style button-google-blue">Play Again</button>
+        </div>
+
+    </div>
+
+    <!-- Custom Modal -->
+    <div id="customModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <p id="modalMessage" class="text-lg font-semibold mb-4 text-gray-800"></p>
+            <button class="button-google-style button-google-blue px-4 py-2 text-base" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
+
+    <script>
+        // Game Data
+        const questions = [
+            {
+                question: "Name a Google Ads campaign type",
+                answers: [
+                    { text: "Search Campaigns", points: 10 },
+                    { text: "Display Campaigns", points: 10 },
+                    { text: "Shopping Campaigns", points: 10 },
+                    { text: "Video Campaigns", points: 10 },
+                    { text: "App Campaigns", points: 10 },
+                ],
+            },
+            {
+                question: "What's the first thing you check in a Google Ads account?",
+                answers: [
+                    { text: "Performance/Results", points: 10 },
+                    { text: "Budget", points: 10 },
+                    { text: "Keywords", points: 10 },
+                    { text: "Campaign Status", points: 10 },
+                    { text: "Quality Score", points: 10 },
+                ],
+            },
+            {
+                question: "Name a Google Analytics metric that clients care about most",
+                answers: [
+                    { text: "Conversions", points: 10 },
+                    { text: "Traffic/Sessions", points: 10 },
+                    { text: "Revenue", points: 10 },
+                    { text: "Bounce Rate", points: 10 },
+                    { text: "Cost Per Acquisition", points: 10 },
+                ],
+            },
+            {
+                question: "What do you call someone who clicks on your ads but doesn't buy?",
+                answers: [
+                    { text: "Window Shopper", points: 10 },
+                    { text: "Browser", points: 10 },
+                    { text: "Visitor", points: 10 },
+                    { text: "Lead", points: 10 },
+                    { text: "Prospect", points: 10 },
+                ],
+            },
+            {
+                question: "Name a reason why a Google Ad might not be showing",
+                answers: [
+                    { text: "Low Budget", points: 10 },
+                    { text: "Poor Quality Score", points: 10 },
+                    { text: "Paused Campaign", points: 10 },
+                    { text: "Keyword Issues", points: 10 },
+                    { text: "Bid Too Low", points: 10 },
+                ],
+            },
+            {
+                question: "What's the most common Google Ads mistake beginners make?",
+                answers: [
+                    { text: "Broad Keywords", points: 10 },
+                    { text: "Wrong Targeting", points: 10 },
+                    { text: "No Negative Keywords", points: 10 },
+                    { text: "Poor Landing Pages", points: 10 },
+                    { text: "Ignoring Mobile", points: 10 },
+                ],
+            },
+            {
+                question: "Name a Google marketing product besides Google Ads",
+                answers: [
+                    { text: "Google Analytics", points: 10 },
+                    { text: "Google My Business", points: 10 },
+                    { text: "YouTube Ads", points: 10 },
+                    { text: "Google Shopping", points: 10 },
+                    { text: "Google Tag Manager", points: 10 },
+                ],
+            },
+            {
+                question: "What makes a client happy with their Google Ads performance?",
+                answers: [
+                    { text: "More Sales/Leads", points: 10 },
+                    { text: "Lower Costs", points: 10 },
+                    { text: "Higher ROI", points: 10 },
+                    { text: "Increased Traffic", points: 10 },
+                    { text: "Better Rankings", points: 10 },
+                ],
+            },
+            {
+                question: "Name something you optimize in Google Ads",
+                answers: [
+                    { text: "Keywords", points: 10 },
+                    { text: "Bids", points: 10 },
+                    { text: "Ad Copy", points: 10 },
+                    { text: "Landing Pages", points: 10 },
+                    { text: "Targeting", points: 10 },
+                ],
+            },
+            {
+                question: "What do clients always want to know about their Google Ads?",
+                answers: [
+                    { text: "How much did I spend?", points: 10 },
+                    { text: "How many clicks did I get?", points: 10 },
+                    { text: "Did I make money?", points: 10 },
+                    { text: "Why isn't it working?", points: 10 },
+                    { text: "Can we do better?", points: 10 },
+                ],
+            },
+        ];
+
+        // Team rotation logic
+        const teamRotation = [
+            ['A', 'B', 'C', 'D', 'E'], // Q1
+            ['B', 'C', 'D', 'E', 'A'], // Q2
+            ['C', 'D', 'E', 'A', 'B'], // Q3
+            ['D', 'E', 'A', 'B', 'C'], // Q4
+            ['E', 'A', 'B', 'C', 'D'], // Q5
+            ['A', 'C', 'E', 'B', 'D'], // Q6
+            ['B', 'D', 'A', 'C', 'E'], // Q7
+            ['C', 'E', 'B', 'D', 'A'], // Q8
+            ['D', 'A', 'C', 'E', 'B'], // Q9
+            ['E', 'B', 'D', 'A', 'C'], // Q10
+        ];
+
+        // Game State Variables
+        let currentQuestionIndex = 0;
+        let teamScores = {
+            'A': 0, 'B': 0, 'C': 0, 'D': 0, 'E': 0
+        };
+        let currentTeamInRotationIndex = 0; // Index for the current question's rotation order
+        let activeTeam = ''; // Current team whose turn it is
+        let revealedAnswers = []; // Array of boolean, true if answer is revealed
+        let timer = 60;
+        let timerInterval;
+        let teamsAnsweredInRound = []; // Tracks which teams have had a turn in the current question (Team A, then B, etc.)
+        let answersRevealedInRound = 0; // Count of answers revealed for the current question
+
+        // DOM Elements
+        const introScreen = document.getElementById('introScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const endGameScreen = document.getElementById('endGameScreen');
+
+        const startGameButton = document.getElementById('startGameButton');
+        const currentRoundDisplay = document.getElementById('currentRoundDisplay');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const currentTeamDisplay = document.getElementById('currentTeamDisplay');
+        const questionDisplay = document.getElementById('questionDisplay');
+        const answersGrid = document.getElementById('answersGrid');
+        const teamScoresDisplay = document.getElementById('teamScoresDisplay');
+        const passTurnButton = document.getElementById('passTurnButton');
+        const nextQuestionButton = document.getElementById('nextQuestionButton');
+        const endGameEarlyButton = document.getElementById('endGameEarlyButton');
+        const finalScoresDisplay = document.getElementById('finalScoresDisplay');
+        const topTeamsDisplay = document.getElementById('topTeamsDisplay');
+        const resetGameButton = document.getElementById('resetGameButton');
+
+        const customModal = document.getElementById('customModal');
+        const modalMessage = document.getElementById('modalMessage');
+
+        // --- Utility Functions ---
+        function showModal(message) {
+            modalMessage.textContent = message;
+            customModal.style.display = 'flex'; // Use flex to center content
+        }
+
+        function closeModal() {
+            customModal.style.display = 'none';
+        }
+
+        // --- Game Logic Functions ---
+
+        function initGame() {
+            introScreen.classList.remove('hidden');
+            gameScreen.classList.add('hidden');
+            endGameScreen.classList.add('hidden');
+            currentQuestionIndex = 0;
+            teamScores = { 'A': 0, 'B': 0, 'C': 0, 'D': 0, 'E': 0 };
+            updateScoreboard();
+        }
+
+        function startGame() {
+            introScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            startRound();
+        }
+
+        function startRound() {
+            if (currentQuestionIndex >= questions.length) {
+                endGame();
+                return;
+            }
+
+            // Reset round specific state
+            revealedAnswers = Array(questions[currentQuestionIndex].answers.length).fill(false);
+            answersRevealedInRound = 0;
+            currentTeamInRotationIndex = 0;
+            teamsAnsweredInRound = [];
+
+            // Update UI for new round
+            currentRoundDisplay.textContent = `${currentQuestionIndex + 1} / ${questions.length}`;
+            questionDisplay.textContent = questions[currentQuestionIndex].question;
+            nextQuestionButton.classList.add('hidden');
+            passTurnButton.classList.remove('hidden');
+            enableAnswerButtons(true);
+
+
+            // Determine the lead team for this question based on rotation
+            const teamsForThisQuestion = teamRotation[currentQuestionIndex];
+            activeTeam = teamsForThisQuestion[currentTeamInRotationIndex];
+            currentTeamDisplay.textContent = `Team ${activeTeam}`;
+
+            renderAnswers();
+            updateScoreboard();
+            startTimer();
+        }
+
+        function renderAnswers() {
+            answersGrid.innerHTML = ''; // Clear previous answers
+            questions[currentQuestionIndex].answers.forEach((answer, index) => {
+                const isRevealed = revealedAnswers[index];
+                const answerCard = document.createElement('div');
+                answerCard.className = `answer-card p-4 flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-300 ease-in-out hover:scale-105 ${isRevealed ? 'answer-card-revealed' : 'bg-gray-50'}`;
+                answerCard.setAttribute('data-index', index);
+
+                answerCard.innerHTML = `
+                    <div class="w-full flex justify-center items-center h-12">
+                        <span class="text-xl font-bold text-gray-400 select-none">${index + 1}.</span>
+                        <span class="text-xl md:text-2xl font-semibold w-full ${isRevealed ? 'answer-text-revealed' : 'answer-text-hidden'}">${answer.text}</span>
+                    </div>
+                    <div class="w-full text-right mt-2">
+                        <span class="text-lg font-bold text-blue-600">${isRevealed ? answer.points : '??'} pts</span>
+                    </div>
+                `;
+
+                if (!isRevealed) {
+                    answerCard.onclick = () => revealAnswer(index);
+                } else {
+                    // Make revealed answers non-clickable
+                    answerCard.style.cursor = 'default';
+                }
+
+                answersGrid.appendChild(answerCard);
+            });
+        }
+
+        function revealAnswer(index) {
+            if (revealedAnswers[index]) {
+                showModal('This answer has already been revealed!');
+                return;
+            }
+
+            // Mark as revealed
+            revealedAnswers[index] = true;
+            answersRevealedInRound++;
+            teamScores[activeTeam] += questions[currentQuestionIndex].answers[index].points; // Award points to current team
+
+            renderAnswers(); // Re-render to show the revealed answer
+            updateScoreboard();
+
+            // Check if all answers are revealed
+            if (answersRevealedInRound === questions[currentQuestionIndex].answers.length) {
+                endRound();
+            }
+        }
+
+        function passTurn() {
+            stopTimer();
+            teamsAnsweredInRound.push(activeTeam); // Record that this team had a turn
+
+            currentTeamInRotationIndex++;
+            const teamsForThisQuestion = teamRotation[currentQuestionIndex];
+
+            if (currentTeamInRotationIndex >= teamsForThisQuestion.length || teamsAnsweredInRound.length >= teamsForThisQuestion.length) {
+                // All teams have had a turn or we cycled through all possible teams for this Q
+                endRound();
+            } else {
+                activeTeam = teamsForThisQuestion[currentTeamInRotationIndex];
+                currentTeamDisplay.textContent = `Team ${activeTeam}`;
+                startTimer(); // Restart timer for the next team
+                showModal(`Turn passed! It's now Team ${activeTeam}'s turn.`);
+            }
+        }
+
+        function endRound() {
+            stopTimer();
+            enableAnswerButtons(false); // Disable all answer buttons
+            passTurnButton.classList.add('hidden'); // Hide pass turn button
+
+            // Reveal any remaining un-guessed answers
+            revealedAnswers.forEach((isRevealed, index) => {
+                if (!isRevealed) {
+                    revealedAnswers[index] = true;
+                }
+            });
+            renderAnswers(); // Show all answers after round ends
+
+            // Check if it's the last question
+            if (currentQuestionIndex + 1 < questions.length) {
+                nextQuestionButton.classList.remove('hidden');
+                showModal('Round Over! Click "Next Question" to continue.');
+            } else {
+                endGame();
+            }
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval); // Clear any existing timer
+            timer = 60;
+            timerDisplay.textContent = timer;
+            timerInterval = setInterval(() => {
+                timer--;
+                timerDisplay.textContent = timer;
+                if (timer <= 0) {
+                    clearInterval(timerInterval);
+                    showModal(`Time's up for Team ${activeTeam}! Turn will be passed automatically.`);
+                    passTurn();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timerDisplay.textContent = '0';
+        }
+
+        function updateScoreboard() {
+            teamScoresDisplay.innerHTML = '';
+            Object.keys(teamScores).forEach(team => {
+                const teamScoreCard = document.createElement('div');
+                teamScoreCard.id = `team-${team}-score-card`;
+                teamScoreCard.className = `p-3 rounded-lg bg-gray-50 shadow-sm transition-all duration-200 ease-in-out ${activeTeam === team ? 'active-team' : ''}`;
+                teamScoreCard.innerHTML = `<span class="font-bold text-xl text-gray-700">Team ${team}:</span> <span class="text-2xl font-extrabold text-blue-700">${teamScores[team]}</span>`;
+                teamScoresDisplay.appendChild(teamScoreCard);
+            });
+        }
+
+        function enableAnswerButtons(enable) {
+            const answerCards = answersGrid.querySelectorAll('.answer-card');
+            answerCards.forEach(card => {
+                const index = parseInt(card.getAttribute('data-index'));
+                // Only enable if the answer is not already revealed
+                if (!revealedAnswers[index]) {
+                    if (enable) {
+                        card.onclick = () => revealAnswer(index);
+                        card.classList.remove('cursor-default');
+                        card.classList.add('cursor-pointer', 'hover:scale-105');
+                    } else {
+                        card.onclick = null;
+                        card.classList.add('cursor-default');
+                        card.classList.remove('cursor-pointer', 'hover:scale-105');
+                    }
+                }
+            });
+        }
+
+        function endGame() {
+            stopTimer();
+            gameScreen.classList.add('hidden');
+            endGameScreen.classList.remove('hidden');
+
+            finalScoresDisplay.innerHTML = '';
+            const sortedTeams = Object.entries(teamScores).sort(([, scoreA], [, scoreB]) => scoreB - scoreA);
+
+            sortedTeams.forEach(([team, score]) => {
+                const teamScoreCard = document.createElement('div');
+                teamScoreCard.className = `p-4 rounded-lg bg-blue-50 shadow-md text-center border-b-4 ${team === sortedTeams[0][0] ? 'border-yellow-500' : (team === sortedTeams[1][0] ? 'border-gray-400' : (team === sortedTeams[2][0] ? 'border-amber-700' : 'border-gray-200'))}`;
+                teamScoreCard.innerHTML = `<span class="font-bold text-2xl text-gray-700">Team ${team}</span><br><span class="text-4xl font-extrabold text-blue-700">${score}</span>`;
+                finalScoresDisplay.appendChild(teamScoreCard);
+            });
+
+            // Announce top 3 teams
+            let topTeamsMessage = "Congratulations to our winners! ";
+            topTeamsMessage += `<span class="text-yellow-500">1st Place: Team ${sortedTeams[0][0]} (${sortedTeams[0][1]} pts)</span>`;
+            if (sortedTeams.length > 1) {
+                topTeamsMessage += `, <span class="text-gray-400">2nd Place: Team ${sortedTeams[1][0]} (${sortedTeams[1][1]} pts)</span>`;
+            }
+            if (sortedTeams.length > 2) {
+                topTeamsMessage += `, <span class="text-amber-700">3rd Place: Team ${sortedTeams[2][0]} (${sortedTeams[2][1]} pts)</span>`;
+            }
+            topTeamsDisplay.innerHTML = topTeamsMessage;
+        }
+
+        // --- Event Listeners ---
+        startGameButton.addEventListener('click', startGame);
+        passTurnButton.addEventListener('click', passTurn);
+        nextQuestionButton.addEventListener('click', () => {
+            currentQuestionIndex++;
+            startRound();
+        });
+        endGameEarlyButton.addEventListener('click', () => {
+            showModal('Are you sure you want to end the game early?'); // A simple prompt using custom modal
+            // In a real scenario, you'd want a "confirm" button in the modal
+            // For now, this is just an alert replacement. Host can then click endGame()
+            endGame();
+        });
+        resetGameButton.addEventListener('click', initGame);
+
+        // Initial setup on load
+        window.onload = initGame;
+
+        // Ensure responsiveness on resize for dynamic elements if needed, though Tailwind handles most
+        window.addEventListener('resize', () => {
+            // No specific JS resize logic needed for this layout as Tailwind handles it well.
+            // But if there were canvas elements or specific pixel-based calculations, they'd go here.
+        });
+
+    </script>
+</body>
+</html>
