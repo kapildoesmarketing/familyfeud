@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Family Feud</title>
+    <title>Family Feud</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,437 +11,455 @@
     <style>
         body {
             font-family: 'Google Sans', 'Roboto', sans-serif;
-            background-color: #F1F3F4; /* Google's light gray background */
-            color: #3c4043; /* Google's standard text color */
+            background-color: #F1F3F4;
+            color: #3c4043;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Custom Google Colors */
-        .google-blue { color: #4285F4; }
-        .google-red { color: #EA4335; }
-        .google-yellow { color: #FBBC05; }
-        .google-green { color: #34A853; }
-        .bg-google-blue { background-color: #4285F4; }
-        .bg-google-red { background-color: #EA4335; }
-        .bg-google-yellow { background-color: #FBBC05; }
-        .bg-google-green { background-color: #34A853; }
-        
         .card {
             background-color: #FFFFFF;
-            border-radius: 1.5rem; /* More rounded corners */
+            border-radius: 1rem;
             border: 1px solid #DADCE0;
-            padding: 1.5rem;
-            box-shadow: 0 1px 3px 0 rgba(60,64,67,0.302), 0 4px 8px 3px rgba(60,64,67,0.149);
-            transition: all 0.3s ease-in-out;
+            padding: 0.75rem;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.302), 0 2px 6px 2px rgba(60,64,67,0.149);
         }
 
-        .team-card.active {
-            transform: scale(1.05);
-            border-color: #4285F4;
-            box-shadow: 0 8px 15px rgba(66, 133, 244, 0.4);
+        .btn-press {
+             transition: transform 0.1s ease, filter 0.1s ease;
         }
 
-        /* Answer Card Flip Animation */
-        .answer-flipper {
-            perspective: 1000px;
+        .btn-press:active {
+            transform: scale(0.95);
+            filter: brightness(0.9);
         }
-        .answer-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.6s;
+
+        .answer-card {
+            background-color: #E8EAED;
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.4s ease;
             transform-style: preserve-3d;
-        }
-        .answer-flipper.revealed .answer-inner {
-            transform: rotateY(180deg);
-        }
-        .answer-front, .answer-back {
-            position: absolute;
-            width: 100%;
+            position: relative;
             height: 100%;
+        }
+        
+        .answer-card .front, .answer-card .back {
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 1.25rem;
-        }
-        .answer-front {
-            background-color: #E8EAED; /* Google light gray for un-revealed */
-        }
-        .answer-back {
-            background-color: #E8F0FE; /* Google light blue for revealed */
-            transform: rotateY(180deg);
-            padding: 1rem;
+            transition: transform 0.4s ease;
+            height: 100%;
         }
 
-        .btn {
-            @apply text-white font-semibold py-3 px-6 rounded-full shadow-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-4;
-        }
-        .btn-blue {
-            @apply bg-google-blue focus:ring-blue-300;
-        }
-        .btn-red {
-            @apply bg-google-red focus:ring-red-300;
-        }
-
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
+        .answer-card .back {
+            background-color: #4285F4;
+            color: white;
+            position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
+            right: 0;
+            bottom: 0;
             display: flex;
-            justify-content: center;
             align-items: center;
-            z-index: 50;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
+            justify-content: center; /* Centered text */
+            padding: 1rem;
+            border-radius: 0.75rem;
+            transform: rotateY(180deg);
         }
-        .modal-overlay.visible {
-            opacity: 1;
-            visibility: visible;
+
+        .answer-card.revealed {
+            transform: rotateY(180deg);
         }
-        .modal-content {
-            transform: scale(0.9);
-            transition: transform 0.3s;
-        }
-        .modal-overlay.visible .modal-content {
-            transform: scale(1);
-        }
+
     </style>
 </head>
-<body class="p-4 sm:p-6 md:p-8">
+<body class="p-2 flex items-center justify-center min-h-screen">
 
-    <main id="gameContainer" class="max-w-screen-2xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <main class="w-full max-w-5xl h-full mx-auto grid grid-cols-1 lg:grid-cols-6 gap-2">
         
         <!-- Left Column: Teams -->
-        <div id="teamsContainer" class="lg:col-span-1 space-y-4">
-            <!-- Team cards will be generated here -->
+        <div id="teamsContainer" class="col-span-1 space-y-2 flex flex-col">
+            <!-- Team cards will be dynamically generated here -->
         </div>
 
-        <!-- Center Column: Question & Answers -->
-        <div id="center-column" class="lg:col-span-2 flex flex-col gap-6">
-            <div id="questionCard" class="card flex-grow flex items-center justify-center text-center">
-                 <div id="initialView">
-                     <h1 class="text-4xl font-bold mb-4">Family Feud</h1>
-                     <p class="text-lg text-gray-600 mb-8">Google India Marketing Edition</p>
-                     <button id="startGameButton" class="btn btn-blue text-xl">Start Game</button>
-                 </div>
-                <div id="questionView" class="hidden">
-                     <p class="text-lg font-medium text-gray-500 mb-2">Round: <span id="roundDisplay">1</span></p>
-                    <h2 id="questionDisplay" class="text-3xl font-bold"></h2>
-                </div>
+        <!-- Center Column: Game Board -->
+        <div class="lg:col-span-4 flex flex-col gap-2">
+            <div id="questionDisplayCard" class="card flex-grow flex flex-col items-center justify-center p-4 min-h-[100px]">
+                <!-- Question/Welcome message will go here -->
             </div>
-            <div id="answersGrid" class="grid grid-cols-2 gap-4">
-                <!-- Answer cards will be generated here -->
+            <div id="answerBoard" class="card flex-grow flex flex-col p-4 min-h-[300px]">
+                <!-- Answers or Start Button will go here -->
             </div>
         </div>
 
         <!-- Right Column: Controls -->
-        <div id="right-column" class="lg:col-span-1 flex flex-col gap-6">
-            <div class="card text-center">
-                <h3 class="text-xl font-medium text-gray-500 mb-2">Current Team</h3>
-                <p id="currentTeamDisplay" class="text-4xl font-bold google-blue">-</p>
+        <div class="col-span-1 space-y-2 flex flex-col">
+            <div class="card text-center flex-grow">
+                <h3 class="text-base font-medium text-gray-500 mb-1">Current Team</h3>
+                <p id="currentTeamDisplay" class="text-2xl font-bold text-blue-600">-</p>
             </div>
-            <div class="card text-center">
-                <h3 class="text-xl font-medium text-gray-500 mb-2">Time Left</h3>
-                <p id="timerDisplay" class="text-6xl font-bold google-red">60</p>
+            <div class="card text-center flex-grow">
+                <h3 class="text-base font-medium text-gray-500 mb-1">Time Left</h3>
+                <p id="timerDisplay" class="text-5xl font-bold text-red-600">00</p>
             </div>
-            <div class="flex flex-col gap-4">
-                <button id="passTurnButton" class="card text-2xl font-bold text-yellow-600 hover:bg-yellow-50 focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Pass Turn</button>
-                <button id="endGameButton" class="card text-2xl font-bold text-red-600 hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-200">End Game</button>
+            <div id="endGameButton" class="card text-center flex-grow flex items-center justify-center cursor-pointer hover:bg-red-100 transition-colors btn-press">
+                <h3 class="text-lg font-bold text-red-600">End Game</h3>
             </div>
         </div>
+
     </main>
 
-    <!-- Modal for Game Over -->
-    <div id="gameOverModal" class="modal-overlay">
-        <div class="modal-content card w-full max-w-2xl text-center">
-            <h2 class="text-4xl font-bold google-blue mb-4">Game Over!</h2>
-            <p class="text-xl mb-6">Here are the final scores:</p>
-            <div id="finalScoresDisplay" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                <!-- Final scores go here -->
-            </div>
-            <div id="winnersDisplay" class="text-2xl font-bold mb-8"></div>
-            <button id="playAgainButton" class="btn btn-blue text-lg">Play Again</button>
-        </div>
-    </div>
-
 <script>
-    // --- GAME DATA ---
+    // --- GAME STATE ---
+    let teamScores = {};
+    let currentRound = 0;
+    let revealedAnswers = [];
+    let currentTeamIndex = 0;
+    let teamsPlayedThisRound = new Set();
+    let gameState = 'IDLE'; // IDLE, NORMAL, STEAL, STEAL_ATTEMPT, ROUND_OVER
+    let stealingTeamIndex = null;
+    let timerInterval = null;
+
+    // --- STATIC DATA ---
     const teams = [
-        { name: 'Performance Patriots', logoUrl: 'https://kapildoesmarketing.github.io/familyfeud/1.png' },
+        { name: 'Pixel Patriots', logoUrl: 'https://kapildoesmarketing.github.io/familyfeud/1.png' },
         { name: 'Impression Invaders', logoUrl: 'https://kapildoesmarketing.github.io/familyfeud/2.png' },
         { name: 'Xtreme Optimizers', logoUrl: 'https://kapildoesmarketing.github.io/familyfeud/3.png' },
         { name: 'Engagement Experts', logoUrl: 'https://kapildoesmarketing.github.io/familyfeud/5.png' },
         { name: 'Lead Legends', logoUrl: 'https://kapildoesmarketing.github.io/familyfeud/4.png' }
     ];
 
-    const questions = [
-        { question: "Name a Google Ads campaign type.", answers: [{ text: "Search", points: 10 },{ text: "Display", points: 10 },{ text: "Shopping", points: 10 },{ text: "Video", points: 10 },{ text: "App", points: 10 }] },
-        { question: "Name a key metric in Google Analytics.", answers: [{ text: "Sessions", points: 10 },{ text: "Users", points: 10 },{ text: "Bounce Rate", points: 10 },{ text: "Conversion Rate", points: 10 },{ text: "Avg. Session Duration", points: 10 }] },
-        { question: "Name a reason an ad might be disapproved.", answers: [{ text: "Trademark Violation", points: 10 },{ text: "Misleading Content", points: 10 },{ text: "Low Quality Landing Page", points: 10 },{ text: "Prohibited Content", points: 10 },{ text: "Gimmicky Text", points: 10 }] },
-        { question: "What do clients always ask for?", answers: [{ text: "More Leads / Sales", points: 10 },{ text: "Lower CPA", points: 10 },{ text: "Higher CTR", points: 10 },{ text: "Better ROI", points: 10 },{ text: "Rank #1", points: 10 }] },
-        { question: "Name a part of a Search ad.", answers: [{ text: "Headline", points: 10 },{ text: "Description", points: 10 },{ text: "Display URL", points: 10 },{ text: "Ad Extensions", points: 10 },{ text: "Final URL", points: 10 }] },
-        { question: "Besides Google Ads, name a Google Marketing Platform product.", answers: [{ text: "Analytics 360", points: 10 },{ text: "Search Ads 360", points: 10 },{ text: "Display & Video 360", points: 10 },{ text: "Tag Manager 360", points: 10 },{ text: "Optimize 360", points: 10 }] },
-        { question: "Name a type of keyword match.", answers: [{ text: "Broad Match", points: 10 },{ text: "Phrase Match", points: 10 },{ text: "Exact Match", points: 10 },{ text: "Broad Match Modifier", points: 10 },{ text: "Negative Match", points: 10 }] },
-        { question: "What factor influences Ad Rank?", answers: [{ text: "Bid Amount", points: 10 },{ text: "Quality Score", points: 10 },{ text: "Ad Extensions Impact", points: 10 },{ text: "Ad Format", points: 10 },{ text: "User Context", points: 10 }] },
-        { question: "Name a popular bidding strategy.", answers: [{ text: "Target CPA", points: 10 },{ text: "Maximize Conversions", points: 10 },{ text: "Enhanced CPC", points: 10 },{ text: "Maximize Clicks", points: 10 },{ text: "Target ROAS", points: 10 }] },
-        { question: "Name a common challenge in digital marketing.", answers: [{ text: "Attribution", points: 10 },{ text: "Budget Constraints", points: 10 },{ text: "Ad Fraud", points: 10 },{ text: "Keeping up with changes", points: 10 },{ text: "Privacy Regulations", points: 10 }] }
-    ];
-    
-    // Using a simpler rotation for 5 teams
-    const teamRotation = [
-        [0, 1, 2, 3, 4], // Q1
-        [1, 2, 3, 4, 0], // Q2
-        [2, 3, 4, 0, 1], // Q3
-        [3, 4, 0, 1, 2], // Q4
-        [4, 0, 1, 2, 3], // Q5
-        [0, 2, 4, 1, 3], // Q6
-        [1, 3, 0, 2, 4], // Q7
-        [2, 4, 1, 3, 0], // Q8
-        [3, 0, 2, 4, 1], // Q9
-        [4, 1, 3, 0, 2]  // Q10
+    const feudQuestions = [
+        { question: "What signals does broad match consider?", answers: [{ text: "Current Keyword" }, { text: "Landing Pages" }, { text: "Other Keywords in the ad group" }, { text: "Previous User Searches" }, { text: "Predicted Performance" }, { text: "User Location" }] },
+        { question: "Which tools help find keywords for an advertiser?", answers: [{ text: "CBX // Top Terms Report" }, { text: "KW Refinery" }, { text: "KW Planner" }, { text: "Answer the Public" }, { text: "Pmax Insights - Max Magic Tool" }, { text: "Optiscore Reccos" }, { text: "Keywave" }] },
+        { question: "What are best practices for implementing broad match?", answers: [{ text: "Use Smart Bidding" }, { text: "Add Negative Keywords" }, { text: "Add duplicate keywords in BM version" }, { text: "Test & Implement - Drafts & Experiments" }, { text: "Not Budget Constrained" }, { text: "Use UTM tracking for lead quality" }] },
+        { question: "What are the important components / features of AI Max?", answers: [{ text: "Keywordless matching / Search Term matching" }, { text: "Automatically created assets" }, { text: "URL Expansion" }, { text: "Location Targeting at ad group level" }, { text: "Robust & Transparent Reporting" }] },
+        { question: "What are some new Search & Pmax features?", answers: [{ text: "Ads Opportunities / User Searches" }, { text: "AI Overview" }, { text: "AI Mode" }, { text: "Search Smart Bidding Exploration" }, { text: "Retention Goals on Pmax" }, { text: "Age & Gender Exclusion" }, { text: "Channel Reporting" }, { text: "iOS targeting" }, { text: "OS / Device Exclusion" }, { text: "First Party Audience Exclusion" }, { text: "Pmax Search Terms Reporting" }, { text: "Flighted Budgets in Pmax" }] },
+        { question: "What benchmarks show search competition?", answers: [{ text: "Impression Share / Ad Rank" }, { text: "Clickthrough Rates" }, { text: "Cost Per Click" }, { text: "Click Share" }, { text: "Peer Set average spend" }, { text: "Auction Insights" }] },
+        { question: "How can we improve search impression share?", answers: [{ text: "Unconstrained Bids" }, { text: "Unconstrained budgets" }, { text: "Improve CTR" }, { text: "Improve Landing Page experience" }, { text: "Improve ad relevance" }, { text: "Refine / Add Negative Keywords" }, { text: "Asset Quality / Ad strength" }] },
+        { question: "What signals does Gboost consider? What campaigns are eligible?", answers: [{ text: "Overpacing Campaign" }, { text: "Campaign performance" }, { text: "Search" }, { text: "Pmax" }, { text: "Shopping" }, { text: "App" }] },
+        { question: "How to improve lead quality?", answers: [{ text: "Search Term / Keyword Audit" }, { text: "Landing Page Audit" }, { text: "UTM Tracking" }, { text: "Lead Scoring" }, { text: "QVT" }, { text: "EC4L / OCI" }, { text: "Network Serving (Search Partners)" }, { text: "Bid Restrictions" }, { text: "Ad Audit" }] },
+        { question: "What are the highlights in new search metrics?", answers: [{ text: "Queries are deprecated" }, { text: "Ads Opportunities" }, { text: "User Searches" }, { text: "User Searches are indexed" }, { text: "Text + Shopping is 1 Ad opportunity" }, { text: "AI Overview is 1 Ad opportunity" }, { text: "AI Mode is 1 ad opportunity" }] }
     ];
 
-    // --- GAME STATE ---
-    let currentQuestionIndex = 0;
-    let teamScores = {};
-    let activeTeamIndex = -1;
-    let revealedAnswers = [];
-    let timer = 60;
-    let timerInterval;
-    let roundTeamOrder = [];
-    let currentTurnIndex = 0;
-
-    // --- DOM ELEMENTS ---
+    // --- DOM ELEMENTS CACHING ---
     const teamsContainer = document.getElementById('teamsContainer');
-    const questionDisplay = document.getElementById('questionDisplay');
-    const roundDisplay = document.getElementById('roundDisplay');
-    const answersGrid = document.getElementById('answersGrid');
+    const questionDisplayCard = document.getElementById('questionDisplayCard');
+    const answerBoard = document.getElementById('answerBoard');
     const currentTeamDisplay = document.getElementById('currentTeamDisplay');
     const timerDisplay = document.getElementById('timerDisplay');
-    const passTurnButton = document.getElementById('passTurnButton');
     const endGameButton = document.getElementById('endGameButton');
-    const startGameButton = document.getElementById('startGameButton');
-    const initialView = document.getElementById('initialView');
-    const questionView = document.getElementById('questionView');
-    const gameOverModal = document.getElementById('gameOverModal');
-    const finalScoresDisplay = document.getElementById('finalScoresDisplay');
-    const winnersDisplay = document.getElementById('winnersDisplay');
-    const playAgainButton = document.getElementById('playAgainButton');
 
-    // --- GAME LOGIC ---
-
-    function initGame() {
-        // Reset state
-        currentQuestionIndex = 0;
-        teamScores = teams.reduce((acc, team) => ({ ...acc, [team.name]: 0 }), {});
-        activeTeamIndex = -1;
-        timer = 60;
-        clearInterval(timerInterval);
-
-        // Reset UI
-        initialView.style.display = 'block';
-        questionView.style.display = 'none';
-        answersGrid.innerHTML = '';
-        gameOverModal.classList.remove('visible');
-        passTurnButton.disabled = true;
-
-        timerDisplay.textContent = timer;
-        currentTeamDisplay.textContent = '-';
-
-        renderTeams();
-    }
-
+    // --- RENDER FUNCTIONS ---
     function renderTeams() {
         teamsContainer.innerHTML = '';
         teams.forEach((team, index) => {
             const teamCard = document.createElement('div');
-            teamCard.id = `team-card-${index}`;
-            teamCard.className = 'team-card card flex items-center space-x-4';
-            if (index === activeTeamIndex) {
-                teamCard.classList.add('active');
-            }
+            const score = teamScores[team.name] || 0; 
+            const isActive = index === currentTeamIndex && gameState === 'NORMAL';
+            teamCard.className = `card p-2 transition-all duration-300 ${isActive ? 'ring-4 ring-blue-400' : ''}`;
             teamCard.innerHTML = `
-                <img src="${team.logoUrl}" alt="${team.name} Logo" class="w-20 h-20 object-contain">
-                <div>
-                    <p class="text-xl font-bold">${team.name}</p>
-                    <p class="text-3xl font-bold google-blue">${teamScores[team.name] || 0}</p>
+                <div class="flex items-center gap-2 w-full">
+                    <img src="${team.logoUrl}" alt="${team.name} Logo" class="w-8 h-8 object-contain" onerror="this.src='https://placehold.co/40x40/E8EAED/3c4043?text=G'">
+                    <div class="flex-grow">
+                        <p class="text-sm font-bold">${team.name}</p>
+                        <p class="score-display-${index} text-xl font-bold text-green-600 transition-colors duration-300">${score}</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end gap-1 mt-1 w-full">
+                    <button class="w-6 h-6 flex items-center justify-center rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors text-base font-bold btn-press" onclick="manualAdjustScore(${index}, 5)" title="Add 5 points">+</button>
+                    <button class="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition-colors text-base font-bold btn-press" onclick="manualAdjustScore(${index}, -5)" title="Subtract 5 points">-</button>
                 </div>
             `;
             teamsContainer.appendChild(teamCard);
         });
     }
 
-    function startGame() {
-        initialView.style.display = 'none';
-        questionView.style.display = 'block';
-        passTurnButton.disabled = false;
-        startRound();
-    }
-    
-    function startRound() {
-        if (currentQuestionIndex >= questions.length) {
-            endGame();
-            return;
-        }
-
-        revealedAnswers = Array(questions[currentQuestionIndex].answers.length).fill(false);
-        roundTeamOrder = teamRotation[currentQuestionIndex];
-        currentTurnIndex = 0;
-        
-        updateActiveTeam();
-        
-        roundDisplay.textContent = currentQuestionIndex + 1;
-        questionDisplay.textContent = questions[currentQuestionIndex].question;
-
-        renderAnswers();
-        renderTeams();
-        startTimer(60);
-    }
-    
-    function renderAnswers() {
-        answersGrid.innerHTML = '';
-        questions[currentQuestionIndex].answers.forEach((answer, index) => {
-            const isRevealed = revealedAnswers[index];
-            const answerFlipper = document.createElement('div');
-            answerFlipper.className = `answer-flipper h-24 md:h-28 cursor-pointer ${isRevealed ? 'revealed' : ''}`;
-            answerFlipper.dataset.index = index;
-
-            answerFlipper.innerHTML = `
-                <div class="answer-inner">
-                    <div class="answer-front">
-                        <span class="text-4xl font-bold text-gray-400">${index + 1}</span>
+    function renderAnswerBoard() {
+        const roundData = feudQuestions[currentRound];
+        questionDisplayCard.innerHTML = `<h2 class="text-2xl font-bold text-center">${roundData.question}</h2>`;
+        let boardHTML = `<div class="flex flex-col h-full w-full">`;
+        boardHTML += `<div class="grid grid-cols-2 gap-3 w-full flex-grow">`;
+        roundData.answers.forEach((answer, index) => {
+            const isRevealed = revealedAnswers.includes(index);
+            boardHTML += `
+                <div class="answer-card ${isRevealed ? 'revealed' : ''}" onclick="revealAnswer(${index})">
+                    <div class="front flex items-center justify-center">
+                        <span class="text-2xl font-bold">${index + 1}</span>
                     </div>
-                    <div class="answer-back">
-                        <div class="text-center">
-                            <p class="text-lg md:text-xl font-bold">${answer.text}</p>
-                            <p class="text-sm md:text-base font-medium google-blue">${answer.points} Points</p>
-                        </div>
+                    <div class="back">
+                        <span class="text-lg font-semibold text-center">${answer.text}</span>
                     </div>
                 </div>
             `;
-            
-            if (!isRevealed) {
-                answerFlipper.onclick = () => revealAnswer(index);
-            } else {
-                answerFlipper.style.cursor = 'default';
-            }
-
-            answersGrid.appendChild(answerFlipper);
         });
-    }
-
-    function revealAnswer(index) {
-        if (revealedAnswers[index]) return;
-
-        revealedAnswers[index] = true;
+        boardHTML += `</div>`;
         
-        const teamName = teams[activeTeamIndex].name;
-        teamScores[teamName] += questions[currentQuestionIndex].answers[index].points;
-
-        const flipper = document.querySelector(`.answer-flipper[data-index='${index}']`);
-        flipper.classList.add('revealed');
-        flipper.onclick = null; // Disable click after reveal
-        flipper.style.cursor = 'default';
-
-        renderTeams();
-        
-        // Check if all answers revealed
-        if (revealedAnswers.every(r => r)) {
-            setTimeout(endRound, 1000); // Give time for flip animation
+        boardHTML += `<div id="action-buttons" class="mt-4 flex-shrink-0">`;
+        if (gameState === 'NORMAL') {
+            boardHTML += `<button onclick="passTurn()" class="w-full bg-gray-500 text-white font-bold py-3 rounded-lg text-xl btn-press">Pass Turn</button>`;
         }
+        boardHTML += `</div>`;
+
+        boardHTML += `</div>`;
+        answerBoard.innerHTML = boardHTML;
     }
 
-    function updateActiveTeam() {
-        activeTeamIndex = roundTeamOrder[currentTurnIndex];
-        currentTeamDisplay.textContent = teams[activeTeamIndex].name;
+    function showStartScreen() {
+        gameState = 'IDLE';
+        questionDisplayCard.innerHTML = `<h2 class="text-3xl font-bold">Family Feud</h2>`;
+        answerBoard.innerHTML = `
+            <div class="text-center h-full flex flex-col items-center justify-center">
+                <p class="text-lg text-gray-500 mt-2">Get ready for the challenge!</p>
+                <button id="startGameBtn" class="mt-4 bg-blue-600 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105 btn-press">
+                    Start Game
+                </button>
+            </div>
+        `;
+        document.getElementById('startGameBtn').addEventListener('click', startRound);
+        currentTeamDisplay.textContent = "-";
+        timerDisplay.textContent = "00";
         renderTeams();
     }
 
-    function passTurn() {
-        currentTurnIndex++;
-        if (currentTurnIndex >= roundTeamOrder.length) {
+    // --- GAME LOGIC ---
+    window.revealAnswer = (index) => {
+        if (revealedAnswers.includes(index) || gameState === 'IDLE') return;
+        stopTimer();
+        
+        revealedAnswers.push(index);
+        
+        if (gameState === 'NORMAL') {
+            const currentTeamName = teams[currentTeamIndex].name;
+            teamScores[currentTeamName] = (teamScores[currentTeamName] || 0) + 10;
+            renderTeams();
+            renderAnswerBoard();
+            checkNormalRoundContinuation();
+        } else if (gameState === 'STEAL_ATTEMPT') {
+            renderAnswerBoard();
+            checkStealContinuation();
+        }
+    };
+
+    function checkNormalRoundContinuation() {
+        const remainingAnswers = feudQuestions[currentRound].answers.length - revealedAnswers.length;
+        if (remainingAnswers === 0) {
             endRound();
         } else {
-            updateActiveTeam();
-            startTimer(15); // Restart timer for the next team with 15 seconds
+            nextTurn();
         }
     }
 
+    window.passTurn = () => {
+        if (gameState === 'NORMAL') {
+            stopTimer();
+            nextTurn();
+        }
+    };
+    
+    function nextTurn() {
+        teamsPlayedThisRound.add(currentTeamIndex);
+
+        if (teamsPlayedThisRound.size >= teams.length) {
+            enterStealMode();
+        } else {
+            currentTeamIndex = (currentTeamIndex + 1) % teams.length;
+            updateActiveTeamUI();
+            startTimer(30);
+        }
+    }
+
+    function enterStealMode() {
+        gameState = 'STEAL';
+        const remainingAnswers = feudQuestions[currentRound].answers.length - revealedAnswers.length;
+
+        if (remainingAnswers === 0) {
+            endRound();
+            return;
+        }
+
+        let stealHTML = `<div class="text-center">
+            <h3 class="text-2xl font-bold text-purple-600">STEAL ROUND!</h3>
+            <p class="text-lg">Which team is attempting the steal?</p>
+            <div class="flex justify-center flex-wrap gap-2 mt-2">`;
+        
+        teams.forEach((team, index) => {
+            stealHTML += `<button onclick="attemptSteal(${index})" class="p-2 bg-gray-200 rounded-lg btn-press"><img src="${team.logoUrl}" class="w-10 h-10"></button>`;
+        });
+
+        stealHTML += `</div></div>`;
+        questionDisplayCard.innerHTML = stealHTML;
+        currentTeamDisplay.textContent = "Steal!";
+        document.getElementById('action-buttons').innerHTML = ''; // Clear pass button
+    }
+
+    window.attemptSteal = (teamIndex) => {
+        gameState = 'STEAL_ATTEMPT';
+        stealingTeamIndex = teamIndex;
+        
+        let attemptHTML = `<div class="text-center">
+            <h3 class="text-xl font-bold">Steal attempt by ${teams[teamIndex].name}</h3>
+            <p>Was their answer right or wrong?</p>
+            <div class="flex justify-center gap-4 mt-2">
+                <button onclick="handleSteal(true)" class="bg-green-500 text-white font-bold py-2 px-6 rounded-lg text-lg btn-press">Right (+5)</button>
+                <button onclick="handleSteal(false)" class="bg-red-500 text-white font-bold py-2 px-6 rounded-lg text-lg btn-press">Wrong (-5)</button>
+            </div>
+        </div>`;
+        questionDisplayCard.innerHTML = attemptHTML;
+        startTimer(15);
+    };
+
+    function handleSteal(isCorrect) {
+        stopTimer();
+        
+        if (isCorrect) {
+            questionDisplayCard.innerHTML = `<h3 class="text-xl font-bold text-center">Correct! Reveal the answer on the board.</h3>`;
+            teamScores[teams[stealingTeamIndex].name] += 5;
+        } else {
+            teamScores[teams[stealingTeamIndex].name] -= 5;
+            checkStealContinuation();
+        }
+        
+        renderTeams();
+    }
+    
+    function checkStealContinuation() {
+        const remainingAnswers = feudQuestions[currentRound].answers.length - revealedAnswers.length;
+        if (remainingAnswers > 0) {
+            enterStealMode();
+        } else {
+            endRound();
+        }
+    }
+
+    function endRound() {
+        gameState = 'ROUND_OVER';
+        stopTimer();
+        currentTeamDisplay.textContent = "Round Over";
+
+        feudQuestions[currentRound].answers.forEach((_, index) => {
+            if (!revealedAnswers.includes(index)) {
+                revealedAnswers.push(index);
+            }
+        });
+        
+        renderAnswerBoard();
+        document.getElementById('action-buttons').innerHTML = '';
+        renderTeams();
+
+        setTimeout(() => {
+            nextRound();
+        }, 2500);
+    }
+
+    function nextRound() {
+        currentRound++;
+        if (currentRound >= feudQuestions.length) {
+            endGame();
+        } else {
+            startRound();
+        }
+    }
+
+    function endGame() {
+        stopTimer();
+        gameState = 'IDLE';
+        let highestScore = -Infinity;
+        let winners = [];
+
+        for (const teamName in teamScores) {
+            if (teamScores[teamName] > highestScore) {
+                highestScore = teamScores[teamName];
+                winners = [teamName];
+            } else if (teamScores[teamName] === highestScore) {
+                winners.push(teamName);
+            }
+        }
+
+        let winnerMessage;
+        if (winners.length > 1) {
+            winnerMessage = `It's a tie between ${winners.join(' & ')}!`;
+        } else if (winners.length === 1) {
+            winnerMessage = `${winners[0]} wins the game!`;
+        } else {
+            winnerMessage = "Good game, everyone!";
+        }
+
+        questionDisplayCard.innerHTML = `<h2 class="text-4xl font-bold text-center">Game Over!</h2>`;
+        answerBoard.innerHTML = `
+            <div class="text-center h-full flex flex-col items-center justify-center">
+                <p class="text-2xl text-blue-600 mt-2">${winnerMessage}</p>
+                <p class="text-xl text-gray-500 mt-2">Final Score: ${highestScore}</p>
+                <button onclick="initializeGame()" class="mt-4 bg-blue-600 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105 btn-press">
+                    Play Again
+                </button>
+            </div>
+        `;
+        currentTeamDisplay.textContent = 'Finished';
+    }
+
+    function updateActiveTeamUI() {
+        currentTeamDisplay.textContent = teams[currentTeamIndex].name;
+        renderTeams();
+    }
+    
+    window.manualAdjustScore = (teamIndex, points) => {
+        const teamName = teams[teamIndex].name;
+        teamScores[teamName] = (teamScores[teamName] || 0) + points;
+        renderTeams();
+    }
+
+    function initializeGame() {
+        teams.forEach(team => {
+            teamScores[team.name] = 0;
+        });
+        currentRound = 0;
+        showStartScreen();
+    }
+
+    function startRound() {
+        gameState = 'NORMAL';
+        currentTeamIndex = 0;
+        revealedAnswers = [];
+        teamsPlayedThisRound.clear();
+        
+        renderAnswerBoard();
+        updateActiveTeamUI();
+        startTimer(45);
+    }
+    
+    // --- TIMER FUNCTIONS ---
     function startTimer(duration) {
         clearInterval(timerInterval);
-        timer = duration;
-        timerDisplay.textContent = timer;
+        let timeLeft = duration;
+        timerDisplay.textContent = String(timeLeft).padStart(2, '0');
         timerInterval = setInterval(() => {
-            timer--;
-            timerDisplay.textContent = timer;
-            if (timer <= 0) {
-                clearInterval(timerInterval);
-                passTurn();
+            timeLeft--;
+            timerDisplay.textContent = String(timeLeft).padStart(2, '0');
+            if (timeLeft <= 0) {
+                stopTimer();
+                if (gameState === 'NORMAL') {
+                    passTurn();
+                } else if (gameState === 'STEAL_ATTEMPT') {
+                    handleSteal(false);
+                }
             }
         }, 1000);
     }
 
-    function endRound() {
+    function stopTimer() {
         clearInterval(timerInterval);
-        passTurnButton.disabled = true;
-        
-        // Auto-reveal any remaining answers
-        revealedAnswers.forEach((isRevealed, index) => {
-            if (!isRevealed) {
-                revealedAnswers[index] = true;
-                const flipper = document.querySelector(`.answer-flipper[data-index='${index}']`);
-                flipper.classList.add('revealed');
-                flipper.onclick = null;
-                flipper.style.cursor = 'default';
-            }
-        });
-        
-        // Show a "Next Round" button, or just move on after a delay
-        setTimeout(() => {
-            currentQuestionIndex++;
-            passTurnButton.disabled = false;
-            startRound();
-        }, 3000); // Wait 3 seconds before starting next round
+        timerDisplay.textContent = "00";
     }
 
-    function endGame() {
-        clearInterval(timerInterval);
-        gameOverModal.classList.add('visible');
-
-        const sortedTeams = Object.entries(teamScores).sort((a, b) => b[1] - a[1]);
-        
-        finalScoresDisplay.innerHTML = '';
-        sortedTeams.forEach(([name, score]) => {
-            const teamInfo = teams.find(t => t.name === name);
-            finalScoresDisplay.innerHTML += `
-                <div class="p-4 bg-gray-100 rounded-lg">
-                    <p class="font-bold text-lg">${name}</p>
-                    <p class="text-3xl font-bold google-blue">${score}</p>
-                </div>
-            `;
-        });
-
-        if (sortedTeams.length > 0) {
-            winnersDisplay.innerHTML = `<span class="google-yellow">🏆 Winner: ${sortedTeams[0][0]} 🏆</span>`;
-        }
-    }
-
-    // --- EVENT LISTENERS ---
-    startGameButton.addEventListener('click', startGame);
-    passTurnButton.addEventListener('click', passTurn);
+    // Initial load
+    window.onload = () => {
+        initializeGame();
+    };
+    
     endGameButton.addEventListener('click', endGame);
-    playAgainButton.addEventListener('click', initGame);
 
-    // Initialize on page load
-    window.onload = initGame;
 </script>
 </body>
 </html>
-
-
