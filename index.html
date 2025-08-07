@@ -366,7 +366,7 @@
             stealHTML += `<button onclick="attemptSteal(${index})" class="p-2 bg-gray-200 rounded-lg btn-press"><img src="${team.logoUrl}" class="w-10 h-10"></button>`;
         });
 
-        stealHTML += `</div></div>`;
+        stealHTML += `</div><button onclick="noSteal()" class="mt-4 w-full bg-yellow-500 text-white font-bold py-3 rounded-lg text-lg btn-press">No Steal</button></div>`;
         updateDisplay(questionDisplayCard, stealHTML);
         currentTeamDisplay.textContent = "Steal!";
         document.getElementById('action-buttons').innerHTML = '';
@@ -386,6 +386,10 @@
         </div>`;
         updateDisplay(questionDisplayCard, attemptHTML);
         startTimer(15);
+    };
+
+    window.noSteal = () => {
+        endRound();
     };
 
     function handleSteal(isCorrect) {
@@ -433,10 +437,12 @@
         
         renderAnswerBoard();
         document.getElementById('action-buttons').innerHTML = '';
+        
+        const revealTime = (feudQuestions[currentRound].answers.length / 2) * 1000;
 
         setTimeout(() => {
             nextRound();
-        }, 3000); // Increased delay to see final board
+        }, revealTime); 
     }
 
     function nextRound() {
