@@ -35,41 +35,95 @@
         }
 
         .answer-card {
-            background-color: #E8EAED;
+            background-color: transparent; /* Container is now transparent */
             border-radius: 0.75rem;
-            padding: 0.5rem;
             cursor: pointer;
+            perspective: 1000px; /* Added for 3D effect */
             transition: all 0.4s ease;
-            transform-style: preserve-3d;
             position: relative;
             height: 100%;
+            opacity: 0;
+            transform: scale(0.5);
+            animation: pop-in 0.5s ease-out forwards;
+        }
+        
+        .answer-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .answer-card.revealed .answer-card-inner {
+            transform: rotateY(180deg);
         }
         
         .answer-card .front, .answer-card .back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
-            transition: transform 0.4s ease;
-            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+        }
+        
+        .answer-card .front {
+            background-color: #E8EAED;
+            color: #3c4043;
         }
 
         .answer-card .back {
             background-color: #4285F4;
             color: white;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center; /* Centered text */
             padding: 1rem;
-            border-radius: 0.75rem;
             transform: rotateY(180deg);
         }
+        
+        /* Keyframe Animations */
+        @keyframes pop-in {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
 
-        .answer-card.revealed {
-            transform: rotateY(180deg);
+        @keyframes content-fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes score-increase-anim {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); color: #10B981; } /* Bright Green */
+            100% { transform: scale(1); }
+        }
+
+        @keyframes score-decrease-anim {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); color: #EF4444; } /* Bright Red */
+            100% { transform: scale(1); }
+        }
+
+        .content-fade-in {
+            animation: content-fade-in 0.4s ease-out;
+        }
+
+        .score-increase {
+            animation: score-increase-anim 0.6s ease-in-out;
+        }
+        
+        .score-decrease {
+            animation: score-decrease-anim 0.6s ease-in-out;
         }
 
     </style>
@@ -109,6 +163,10 @@
         </div>
 
     </main>
+    
+    <!-- Audio elements -->
+    <audio id="rightSound" src="right.mp3" preload="auto"></audio>
+    <audio id="wrongSound" src="wrong.mp3" preload="auto"></audio>
 
 <script>
     // --- GAME STATE ---
@@ -117,7 +175,7 @@
     let revealedAnswers = [];
     let currentTeamIndex = 0;
     let teamsPlayedThisRound = new Set();
-    let gameState = 'IDLE'; // IDLE, NORMAL, STEAL, STEAL_ATTEMPT, ROUND_OVER
+    let gameState = 'IDLE'; // IDLE, NORMAL, STEAL, STEAL_ATTEMPT, REVEAL_STEAL, ROUND_OVER
     let stealingTeamIndex = null;
     let timerInterval = null;
     let missesThisRound = 0;
@@ -151,6 +209,21 @@
     const currentTeamDisplay = document.getElementById('currentTeamDisplay');
     const timerDisplay = document.getElementById('timerDisplay');
     const endGameButton = document.getElementById('endGameButton');
+    const rightSound = document.getElementById('rightSound');
+    const wrongSound = document.getElementById('wrongSound');
+
+    // --- UTILITY FUNCTIONS ---
+    function playAudio(audioElement) {
+        audioElement.currentTime = 0;
+        audioElement.play().catch(error => console.error(`Audio playback failed: ${error}`));
+    }
+    
+    function updateDisplay(element, newHtml) {
+        element.classList.remove('content-fade-in');
+        void element.offsetWidth; // Trigger a reflow to restart the animation
+        element.innerHTML = newHtml;
+        element.classList.add('content-fade-in');
+    }
 
     // --- RENDER FUNCTIONS ---
     function renderTeams() {
@@ -169,8 +242,8 @@
                     </div>
                 </div>
                 <div class="flex items-center justify-end gap-1 mt-1 w-full">
-                    <button class="w-6 h-6 flex items-center justify-center rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors text-base font-bold btn-press" onclick="manualAdjustScore(${index}, 5)" title="Add 5 points">+</button>
-                    <button class="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition-colors text-base font-bold btn-press" onclick="manualAdjustScore(${index}, -5)" title="Subtract 5 points">-</button>
+                    <button class="w-6 h-6 flex items-center justify-center rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors text-base font-bold btn-press" onclick="manualAdjustScore(${index}, 10)" title="Add 10 points">+</button>
+                    <button class="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition-colors text-base font-bold btn-press" onclick="manualAdjustScore(${index}, -10)" title="Subtract 10 points">-</button>
                 </div>
             `;
             teamsContainer.appendChild(teamCard);
@@ -179,18 +252,20 @@
 
     function renderAnswerBoard() {
         const roundData = feudQuestions[currentRound];
-        questionDisplayCard.innerHTML = `<h2 class="text-2xl font-bold text-center">${roundData.question}</h2>`;
+        updateDisplay(questionDisplayCard, `<h2 class="text-2xl font-bold text-center">${roundData.question}</h2>`);
         let boardHTML = `<div class="flex flex-col h-full w-full">`;
         boardHTML += `<div class="grid grid-cols-2 gap-3 w-full flex-grow">`;
         roundData.answers.forEach((answer, index) => {
             const isRevealed = revealedAnswers.includes(index);
             boardHTML += `
-                <div class="answer-card ${isRevealed ? 'revealed' : ''}" onclick="revealAnswer(${index})">
-                    <div class="front flex items-center justify-center">
-                        <span class="text-2xl font-bold">${index + 1}</span>
-                    </div>
-                    <div class="back">
-                        <span class="text-lg font-semibold text-center">${answer.text}</span>
+                <div class="answer-card ${isRevealed ? 'revealed' : ''}" onclick="revealAnswer(${index})" style="animation-delay: ${index * 0.05}s">
+                    <div class="answer-card-inner">
+                        <div class="front">
+                            <span class="text-2xl font-bold">${index + 1}</span>
+                        </div>
+                        <div class="back">
+                            <span class="text-lg font-semibold text-center">${answer.text}</span>
+                        </div>
                     </div>
                 </div>
             `;
@@ -209,8 +284,8 @@
 
     function showStartScreen() {
         gameState = 'IDLE';
-        questionDisplayCard.innerHTML = `<h2 class="text-3xl font-bold">Family Feud</h2>`;
-        answerBoard.innerHTML = `
+        updateDisplay(questionDisplayCard, `<h2 class="text-3xl font-bold">Family Feud</h2>`);
+        const startHTML = `
             <div class="text-center h-full flex flex-col items-center justify-center">
                 <p class="text-lg text-gray-500 mt-2">Get ready for the challenge!</p>
                 <button id="startGameBtn" class="mt-4 bg-blue-600 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105 btn-press">
@@ -218,6 +293,7 @@
                 </button>
             </div>
         `;
+        updateDisplay(answerBoard, startHTML);
         document.getElementById('startGameBtn').addEventListener('click', startRound);
         currentTeamDisplay.textContent = "-";
         timerDisplay.textContent = "00";
@@ -226,25 +302,25 @@
 
     // --- GAME LOGIC ---
     window.revealAnswer = (index) => {
-        if (revealedAnswers.includes(index) || gameState === 'IDLE') return;
-        stopTimer();
-        
-        revealedAnswers.push(index);
+        if (revealedAnswers.includes(index) || gameState === 'IDLE' || gameState === 'ROUND_OVER') return;
         
         if (gameState === 'NORMAL') {
-            const currentTeamName = teams[currentTeamIndex].name;
-            teamScores[currentTeamName] = (teamScores[currentTeamName] || 0) + 10;
-            renderTeams();
+            stopTimer();
+            revealedAnswers.push(index);
+            playAudio(rightSound);
+            adjustScore(currentTeamIndex, 10);
             renderAnswerBoard();
             checkNormalRoundContinuation();
-        } else if (gameState === 'STEAL_ATTEMPT') {
+        } else if (gameState === 'REVEAL_STEAL') {
+            revealedAnswers.push(index);
+            renderAnswerBoard();
+            // After revealing a steal answer, immediately check what's next.
             checkStealContinuation();
         }
     };
 
     function checkNormalRoundContinuation() {
-        const remainingAnswers = feudQuestions[currentRound].answers.length - revealedAnswers.length;
-        if (remainingAnswers === 0 || revealedAnswers.length >= 5) {
+        if (revealedAnswers.length >= 5) {
             endRound();
         } else {
             nextTurn();
@@ -254,6 +330,7 @@
     window.passTurn = () => {
         if (gameState === 'NORMAL') {
             stopTimer();
+            playAudio(wrongSound);
             missesThisRound++;
             nextTurn();
         }
@@ -267,7 +344,7 @@
         } else {
             currentTeamIndex = (currentTeamIndex + 1) % teams.length;
             updateActiveTeamUI();
-            startTimer(30);
+            startTimer(15);
         }
     }
 
@@ -290,7 +367,7 @@
         });
 
         stealHTML += `</div></div>`;
-        questionDisplayCard.innerHTML = stealHTML;
+        updateDisplay(questionDisplayCard, stealHTML);
         currentTeamDisplay.textContent = "Steal!";
         document.getElementById('action-buttons').innerHTML = '';
     }
@@ -307,26 +384,32 @@
                 <button onclick="handleSteal(false)" class="bg-red-500 text-white font-bold py-2 px-6 rounded-lg text-lg btn-press">Wrong (-5)</button>
             </div>
         </div>`;
-        questionDisplayCard.innerHTML = attemptHTML;
+        updateDisplay(questionDisplayCard, attemptHTML);
         startTimer(15);
     };
 
     function handleSteal(isCorrect) {
         stopTimer();
-        missesThisRound--;
+        missesThisRound--; // A steal attempt, right or wrong, uses up one "miss" chance.
         
         if (isCorrect) {
-            questionDisplayCard.innerHTML = `<h3 class="text-xl font-bold text-center">Correct! Reveal the answer on the board.</h3>`;
-            teamScores[teams[stealingTeamIndex].name] += 5;
+            gameState = 'REVEAL_STEAL';
+            playAudio(rightSound);
+            adjustScore(stealingTeamIndex, 5);
+            updateDisplay(questionDisplayCard, `<h3 class="text-xl font-bold text-center">Correct! Reveal the answer on the board.</h3>`);
         } else {
-            teamScores[teams[stealingTeamIndex].name] -= 5;
-            checkStealContinuation();
+            playAudio(wrongSound);
+            adjustScore(stealingTeamIndex, -5);
+            checkStealContinuation(); // If wrong, immediately check what to do next.
         }
-        
-        renderTeams();
     }
     
     function checkStealContinuation() {
+        if (revealedAnswers.length >= 5) {
+            endRound();
+            return;
+        }
+
         const remainingAnswers = feudQuestions[currentRound].answers.length - revealedAnswers.length;
         if (remainingAnswers > 0 && missesThisRound > 0) {
             enterStealMode();
@@ -340,7 +423,9 @@
         stopTimer();
         currentTeamDisplay.textContent = "Round Over";
 
-        feudQuestions[currentRound].answers.forEach((_, index) => {
+        // Auto-reveal all remaining answers
+        const allAnswerIndexes = feudQuestions[currentRound].answers.map((_, i) => i);
+        allAnswerIndexes.forEach(index => {
             if (!revealedAnswers.includes(index)) {
                 revealedAnswers.push(index);
             }
@@ -348,11 +433,10 @@
         
         renderAnswerBoard();
         document.getElementById('action-buttons').innerHTML = '';
-        renderTeams();
 
         setTimeout(() => {
             nextRound();
-        }, 2500);
+        }, 3000); // Increased delay to see final board
     }
 
     function nextRound() {
@@ -388,8 +472,8 @@
             winnerMessage = "Good game, everyone!";
         }
 
-        questionDisplayCard.innerHTML = `<h2 class="text-4xl font-bold text-center">Game Over!</h2>`;
-        answerBoard.innerHTML = `
+        updateDisplay(questionDisplayCard, `<h2 class="text-4xl font-bold text-center">Game Over!</h2>`);
+        const endHTML = `
             <div class="text-center h-full flex flex-col items-center justify-center">
                 <p class="text-2xl text-blue-600 mt-2">${winnerMessage}</p>
                 <p class="text-xl text-gray-500 mt-2">Final Score: ${highestScore}</p>
@@ -398,6 +482,7 @@
                 </button>
             </div>
         `;
+        updateDisplay(answerBoard, endHTML);
         currentTeamDisplay.textContent = 'Finished';
     }
 
@@ -406,10 +491,23 @@
         renderTeams();
     }
     
-    window.manualAdjustScore = (teamIndex, points) => {
+    function adjustScore(teamIndex, points) {
         const teamName = teams[teamIndex].name;
         teamScores[teamName] = (teamScores[teamName] || 0) + points;
         renderTeams();
+
+        const scoreElement = document.querySelector(`.score-display-${teamIndex}`);
+        if(scoreElement) {
+            const animationClass = points > 0 ? 'score-increase' : 'score-decrease';
+            scoreElement.classList.add(animationClass);
+            setTimeout(() => {
+                scoreElement.classList.remove(animationClass);
+            }, 600);
+        }
+    }
+
+    window.manualAdjustScore = (teamIndex, points) => {
+        adjustScore(teamIndex, points);
     }
 
     function initializeGame() {
@@ -429,7 +527,7 @@
         
         renderAnswerBoard();
         updateActiveTeamUI();
-        startTimer(45);
+        startTimer(15);
     }
     
     // --- TIMER FUNCTIONS ---
@@ -466,3 +564,5 @@
 </script>
 </body>
 </html>
+```
+
