@@ -285,6 +285,8 @@
         boardHTML += `<div id="action-buttons" class="mt-4 flex-shrink-0">`;
         if (gameState === 'NORMAL') {
             boardHTML += `<button onclick="passTurn()" class="w-full bg-gray-500 text-white font-bold py-3 rounded-lg text-xl btn-press">Pass Turn</button>`;
+        } else if (gameState === 'ROUND_OVER') {
+            boardHTML += `<button onclick="nextRound()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg text-xl btn-press">Next Question</button>`;
         }
         boardHTML += `</div>`;
 
@@ -306,7 +308,7 @@
         updateDisplay(answerBoard, startHTML);
         document.getElementById('startGameBtn').addEventListener('click', () => {
              if (backgroundMusic.paused) {
-                 backgroundMusic.play().catch(e => console.error("BG music failed to play:", e));
+                   backgroundMusic.play().catch(e => console.error("BG music failed to play:", e));
              }
              startRound();
         });
@@ -366,15 +368,16 @@
     function enterStealMode() {
         playAudio(drumSound); // Play drum roll for steal round!
         gameState = 'STEAL';
+        
+        // Simplified: The steal round now only happens once per round if conditions are met.
         const remainingAnswers = feudQuestions[currentRound].answers.length - revealedAnswers.length;
-
-        if (remainingAnswers === 0 || missesThisRound === 0) {
+        if (remainingAnswers === 0) {
             endRound();
             return;
         }
 
         let stealHTML = `<div class="text-center">
-            <h3 class="text-2xl font-bold text-purple-600">STEAL ROUND! (${missesThisRound} left)</h3>
+            <h3 class="text-2xl font-bold text-purple-600">STEAL ROUND!</h3>
             <p class="text-lg">Which team is attempting the steal?</p>
             <div class="flex justify-center flex-wrap gap-2 mt-2">`;
         
@@ -414,7 +417,7 @@
 
     function handleSteal(isCorrect) {
         stopTimer();
-        missesThisRound--; // A steal attempt, right or wrong, uses up one "miss" chance.
+        // missesThisRound is no longer needed to control steal rounds.
         
         if (isCorrect) {
             gameState = 'REVEAL_STEAL';
@@ -429,17 +432,8 @@
     }
     
     function checkStealContinuation() {
-        if (revealedAnswers.length >= 5) {
-            endRound();
-            return;
-        }
-
-        const remainingAnswers = feudQuestions[currentRound].answers.length - revealedAnswers.length;
-        if (remainingAnswers > 0 && missesThisRound > 0) {
-            enterStealMode();
-        } else {
-            endRound();
-        }
+        // Simplified: After one steal attempt (correct or not), the round ends.
+        endRound();
     }
 
     function endRound() {
@@ -455,14 +449,9 @@
             }
         });
         
+        // This will render the board with all answers revealed
+        // and will also show the "Next Question" button because gameState is 'ROUND_OVER'
         renderAnswerBoard();
-        document.getElementById('action-buttons').innerHTML = '';
-        
-        const revealTime = (feudQuestions[currentRound].answers.length / 2) * 1000;
-
-        setTimeout(() => {
-            nextRound();
-        }, revealTime); 
     }
 
     function nextRound() {
@@ -601,3 +590,4 @@
 </script>
 </body>
 </html>
+
