@@ -165,8 +165,10 @@
     </main>
     
     <!-- Audio elements -->
-    <audio id="rightSound" src="right.mp3" preload="auto"></audio>
+    <audio id="backgroundMusic" src="bg.mp3" preload="auto" loop></audio>
+    <audio id="rightSound" src="rightding.mp3" preload="auto"></audio>
     <audio id="wrongSound" src="wrong.mp3" preload="auto"></audio>
+    <audio id="drumSound" src="drum.mp3" preload="auto"></audio>
 
 <script>
     // --- GAME STATE ---
@@ -182,7 +184,7 @@
 
     // --- STATIC DATA ---
     const teams = [
-        { name: 'Pixel Patriots', logoUrl: 'https://kapildoesmarketing.github.io/familyfeud/1.png' },
+        { name: 'Performance Patriots', logoUrl: 'https://kapildoesmarketing.github.io/familyfeud/1.png' },
         { name: 'Impression Invaders', logoUrl: 'https://kapildoesmarketing.github.io/familyfeud/2.png' },
         { name: 'Xtreme Optimizers', logoUrl: 'https://kapildoesmarketing.github.io/familyfeud/3.png' },
         { name: 'Engagement Experts', logoUrl: 'https://kapildoesmarketing.github.io/familyfeud/5.png' },
@@ -209,8 +211,12 @@
     const currentTeamDisplay = document.getElementById('currentTeamDisplay');
     const timerDisplay = document.getElementById('timerDisplay');
     const endGameButton = document.getElementById('endGameButton');
+    
+    // --- AUDIO ELEMENTS CACHING ---
+    const backgroundMusic = document.getElementById('backgroundMusic');
     const rightSound = document.getElementById('rightSound');
     const wrongSound = document.getElementById('wrongSound');
+    const drumSound = document.getElementById('drumSound');
 
     // --- UTILITY FUNCTIONS ---
     function playAudio(audioElement) {
@@ -288,7 +294,7 @@
 
     function showStartScreen() {
         gameState = 'IDLE';
-        updateDisplay(questionDisplayCard, `<h2 class="text-3xl font-bold">Family Feud</h2>`);
+        updateDisplay(questionDisplayCard, `<h2 class="text-3xl font-bold">Search Storm</h2>`);
         const startHTML = `
             <div class="text-center h-full flex flex-col items-center justify-center">
                 <p class="text-lg text-gray-500 mt-2">Get ready for the challenge!</p>
@@ -298,7 +304,12 @@
             </div>
         `;
         updateDisplay(answerBoard, startHTML);
-        document.getElementById('startGameBtn').addEventListener('click', startRound);
+        document.getElementById('startGameBtn').addEventListener('click', () => {
+             if (backgroundMusic.paused) {
+                 backgroundMusic.play().catch(e => console.error("BG music failed to play:", e));
+             }
+             startRound();
+        });
         currentTeamDisplay.textContent = "-";
         timerDisplay.textContent = "00";
         renderTeams();
@@ -353,6 +364,7 @@
     }
 
     function enterStealMode() {
+        playAudio(drumSound); // Play drum roll for steal round!
         gameState = 'STEAL';
         const remainingAnswers = feudQuestions[currentRound].answers.length - revealedAnswers.length;
 
@@ -464,6 +476,8 @@
 
     function endGame() {
         stopTimer();
+        backgroundMusic.pause();
+        backgroundMusic.currentTime = 0;
         gameState = 'IDLE';
         let highestScore = -Infinity;
         let winners = [];
@@ -568,8 +582,17 @@
         timerDisplay.textContent = "00";
     }
 
+    function setupAudio() {
+        // Set volumes for a balanced audio experience
+        backgroundMusic.volume = 0.1; // Low for background ambiance
+        rightSound.volume = 0.5;      // Clear but not overpowering
+        wrongSound.volume = 0.4;      // Slightly softer than the "right" sound
+        drumSound.volume = 0.6;       // A bit more impactful for the steal round event
+    }
+
     // Initial load
     window.onload = () => {
+        setupAudio();
         initializeGame();
     };
     
@@ -578,4 +601,3 @@
 </script>
 </body>
 </html>
-```
